@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
+import { Vector3 } from 'three'
 
 const EdgesContext = createContext()
 
@@ -8,18 +9,47 @@ function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max))
 }
 
+const toto = (function () {
+  const bbox = new THREE.Box3()
+  const bs = new THREE.Sphere()
+
+  return function (item, camera) {
+    const target = item.groupRef.current
+    target.updateWorldMatrix(true, true)
+    bbox.setFromObject(target)
+
+    // bbox.getCenter(center)
+    // console.log('center=', center)
+
+    bbox.getBoundingSphere(bs)
+
+    let projectedCenter = bs.center.project(camera)
+    // console.log('projectedCenter=', projectedCenter)
+
+    let x, y, z
+    x = clamp(projectedCenter.x, -1, 1)
+    y = clamp(projectedCenter.y, -1, 1)
+    z = clamp(projectedCenter.z, -1, 1)
+
+    item.pos.set(x, y, z)
+  }
+})()
+
 function Edges({ children }) {
   const [items, setItems] = useState([])
+
   const { camera } = useThree()
 
   useFrame(() => {
     // console.log('toto')
+    for (const item of items) {
+      toto(item, camera)
+    }
   })
 
   const value = {
-    add(item) {
-      setItems([...items, item])
-    }
+    items,
+    setItems
   }
 
   return <EdgesContext.Provider value={value}>{children}</EdgesContext.Provider>
@@ -30,57 +60,25 @@ function useEdges() {
 export { useEdges }
 
 function EdgesItem({ children }) {
-  const ref = useRef(null)
-  const [bbox] = useState(() => new THREE.Box3())
-  const [center] = useState(() => new THREE.Vector3())
-  const [bs] = useState(() => new THREE.Sphere())
+  const { items, setItems } = useEdges()
 
-  const [mesh] = useState(() => new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 16), new THREE.MeshBasicMaterial({ color: 'red' })))
-  const [pos] = useState(() => new THREE.Vector3())
-
-  const { scene, camera } = useThree()
-
-  useFrame(() => {
-    // console.log('projectionMatrix elements', camera.matrix.elements)
-
-    const target = ref.current
-    target.updateWorldMatrix(true, true)
-    bbox.setFromObject(target)
-
-    // bbox.getCenter(center)
-    // console.log('center=', center)
-
-    bbox.getBoundingSphere(bs)
-    // mesh.scale.setScalar(bs.radius / 0.1)
-
-    let projectedCenter = bs.center.project(camera)
-    // console.log('projectedCenter=', projectedCenter)
-
-    let x, y, z
-    x = clamp(projectedCenter.x, -1, 1)
-    y = clamp(projectedCenter.y, -1, 1)
-    // z = clamp(projectedCenter.z, -1, 1)
-    z = projectedCenter.z
-    // z = 0.99
-    // console.log(x, y, z)
-
-    pos.set(x, y, z)
-    pos.unproject(camera)
-
-    mesh.visible = Math.abs(projectedCenter.x) >= 1 || Math.abs(projectedCenter.y) >= 1
-
-    mesh.position.copy(pos)
-  })
+  const groupRef = useRef(null)
+  const pinRef = useRef(null)
 
   useLayoutEffect(() => {
-    scene.add(mesh)
-
-    return () => {
-      scene.remove(mesh)
+    const o = {
+      groupRef,
+      pos: new Vector3(),
+      pinRef
     }
+
+    console.log('adding', o, items, performance.now)
+    setItems([...items, o])
+
+    // return () => remove(o)
   }, [])
 
-  return <group ref={ref}>{children}</group>
+  return <group ref={groupRef}>{children}</group>
 }
 export { EdgesItem }
 
