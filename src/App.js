@@ -13,9 +13,9 @@ function Jumbo() {
   // useFrame(({ clock }) => (ref.current.rotation.x = ref.current.rotation.y = ref.current.rotation.z = Math.sin(clock.getElapsedTime()) * 0.3))
   return (
     <group ref={ref}>
-      {/* <Text hAlign="right" position={[-12, 6.5, 0]} children="THREE" /> */}
-      <Text hAlign="right" position={[-12, 0, 0]} children="TRES" />
-      {/* <Text hAlign="right" position={[-12, -6.5, 0]} children="TROIS" /> */}
+      <Text hAlign="right" position={[-12, 6.5, 0]} children="THREE" frustumCulled={false} />
+      <Text hAlign="right" position={[-12, 0, 0]} children="TRES" frustumCulled={false} />
+      <Text hAlign="right" position={[-12, -6.5, 0]} children="TROIS" frustumCulled={false} />
     </group>
   )
 }
@@ -47,6 +47,7 @@ function Bird({ speed, factor, url, ...props }) {
           rotation={[Math.PI / 2, 0, 0]}
           geometry={nodes.Object_0.geometry}
           material={materials.Material_0_COLOR_0}
+          frustumCulled={false}
         />
       </scene>
     </group>
@@ -74,17 +75,19 @@ function Birds() {
 
 export default function App() {
   const [numbirds, setNumbirds] = useState(1)
-  const [bool, setBool] = useState(false)
+  const [camNth, setCamNth] = useState(0)
 
   return (
     <group
       onClick={() => {
         console.log('click')
         setNumbirds(numbirds + 1)
-        setBool(!bool)
+        // setCamNth(camNth + 1)
       }}>
-      <PerspectiveCamera makeDefault={bool} position={[0, 0, 50]}></PerspectiveCamera>
-      <PerspectiveCamera makeDefault={!bool} position={[0, 0, 30]}></PerspectiveCamera>
+      <PerspectiveCamera makeDefault={camNth % 3 === 0} position={[0, 0, 50]} fov={50}></PerspectiveCamera>
+      <PerspectiveCamera makeDefault={camNth % 3 === 1} position={[0, 0, 30]} fov={90}></PerspectiveCamera>
+      <OrthographicCamera makeDefault={camNth % 3 === 2} near={0.00001}></OrthographicCamera>
+      {/* <OrthographicCamera makeDefault zoom={5}></OrthographicCamera> */}
 
       <Suspense fallback={null}>
         <Jumbo />
@@ -96,7 +99,7 @@ export default function App() {
             render={(W, H) => {
               // console.log('WH', W, H)
               return (
-                <mesh>
+                <mesh onPointerOver={({ object }) => object.scale.set(2, 2, 2)} onPointerOut={({ object }) => object.scale.set(1, 1, 1)}>
                   <planeGeometry args={[(2 / 100) * W, (2 / 100) * W]} />
                   <meshBasicMaterial color={'green'} />
                 </mesh>

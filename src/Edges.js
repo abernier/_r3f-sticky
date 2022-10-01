@@ -12,15 +12,24 @@ function clamp(number, min, max) {
 function EdgesItem({ children, render }) {
   const { camera } = useThree()
 
-  // console.log('camera=', camera, camera.near, camera.fov)
-  const H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
-  const W = H * camera.aspect
-  // console.log('H/W=', W, H)
+  console.log('camera=', camera, camera.near, camera.far, camera.fov)
+  let H, W
+  if (camera.type === 'PerspectiveCamera') {
+    H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
+    W = H * camera.aspect
+  } else if ('OrthographicCamera') {
+    console.log(camera.left, camera.right, camera.top, camera.bottom, camera.zoom)
+    H = camera.top - camera.bottom
+    W = camera.right - camera.left
+  } else {
+    console.log('not supported camera type')
+  }
+  console.log('H/W=', H, W)
 
   const containerRef = useRef(null)
   const pinRef = useRef(null)
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // console.log('camera changed', camera.position.z)
 
     const { current: pin } = pinRef
@@ -55,7 +64,7 @@ function EdgesItem({ children, render }) {
         const { current: pin } = pinRef
         // console.log('pin=', pin.position)
         pin.position.setX((x * W) / 2)
-        pin.position.setY((y * W) / 2)
+        pin.position.setY((y * H) / 2)
       }
     })()
   )
@@ -63,16 +72,7 @@ function EdgesItem({ children, render }) {
   return (
     <>
       <group ref={containerRef}>{children}</group>
-      <group
-        ref={pinRef}
-        // attach={(parent, pin) => {
-        //   pin.position.z = -camera.near
-        //   camera.add(pin)
-        //   return () => camera.remove(pin)
-        // }}
-      >
-        {render(W, H)}
-      </group>
+      <group ref={pinRef}>{render(W, H)}</group>
     </>
   )
 }
