@@ -88,7 +88,14 @@ export default function App() {
         <Jumbo />
         {/* <Birds /> */}
         {new Array(numbirds).fill().map((el, i) => (
-          <EdgesItem key={i}>
+          <EdgesItem
+            key={i}
+            render={(W, H) => (
+              <mesh>
+                <planeGeometry args={[(2 / 100) * W, (2 / 100) * W]} />
+                <meshBasicMaterial color={'green'} />
+              </mesh>
+            )}>
             <RandBird x={32.43157638924359} y={2.1634717810210837} z={4.896611046209522} bird="Stork" speed={5} factor={1.023085260486265} />
           </EdgesItem>
         ))}
