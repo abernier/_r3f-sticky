@@ -11,11 +11,24 @@ function clamp(number, min, max) {
 
 function EdgesItem({ children, render }) {
   const { camera } = useThree()
+
+  // console.log('camera=', camera, camera.near, camera.fov)
   const H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
   const W = H * camera.aspect
+  // console.log('H/W=', W, H)
 
   const containerRef = useRef(null)
   const pinRef = useRef(null)
+
+  useLayoutEffect(() => {
+    // console.log('camera changed', camera.position.z)
+
+    const { current: pin } = pinRef
+    pin.position.z = -camera.near
+    camera.add(pin)
+
+    return () => camera.remove(pin)
+  }, [camera])
 
   useFrame(
     (function () {
@@ -52,11 +65,12 @@ function EdgesItem({ children, render }) {
       <group ref={containerRef}>{children}</group>
       <group
         ref={pinRef}
-        attach={(parent, pin) => {
-          pin.position.z = -camera.near
-          camera.add(pin)
-          return () => camera.remove(pin)
-        }}>
+        // attach={(parent, pin) => {
+        //   pin.position.z = -camera.near
+        //   camera.add(pin)
+        //   return () => camera.remove(pin)
+        // }}
+      >
         {render(W, H)}
       </group>
     </>

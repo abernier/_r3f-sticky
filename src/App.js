@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
-import { Sky, Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { Sky, Environment, OrbitControls, PerspectiveCamera, OrthographicCamera } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import Text from './Text'
 import './styles.css'
@@ -74,15 +74,17 @@ function Birds() {
 
 export default function App() {
   const [numbirds, setNumbirds] = useState(1)
-  const cameraRef = useRef()
+  const [bool, setBool] = useState(false)
 
   return (
     <group
       onClick={() => {
         console.log('click')
         setNumbirds(numbirds + 1)
+        setBool(!bool)
       }}>
-      <PerspectiveCamera makeDefault ref={cameraRef} position={[0, 0, 50]}></PerspectiveCamera>
+      <PerspectiveCamera makeDefault={bool} position={[0, 0, 50]}></PerspectiveCamera>
+      <PerspectiveCamera makeDefault={!bool} position={[0, 0, 30]}></PerspectiveCamera>
 
       <Suspense fallback={null}>
         <Jumbo />
@@ -90,12 +92,16 @@ export default function App() {
         {new Array(numbirds).fill().map((el, i) => (
           <EdgesItem
             key={i}
-            render={(W, H) => (
-              <mesh>
-                <planeGeometry args={[(2 / 100) * W, (2 / 100) * W]} />
-                <meshBasicMaterial color={'green'} />
-              </mesh>
-            )}>
+            // camera={bool ? persRef.current : orthRef.current}
+            render={(W, H) => {
+              // console.log('WH', W, H)
+              return (
+                <mesh>
+                  <planeGeometry args={[(2 / 100) * W, (2 / 100) * W]} />
+                  <meshBasicMaterial color={'green'} />
+                </mesh>
+              )
+            }}>
             <RandBird x={32.43157638924359} y={2.1634717810210837} z={4.896611046209522} bird="Stork" speed={5} factor={1.023085260486265} />
           </EdgesItem>
         ))}
