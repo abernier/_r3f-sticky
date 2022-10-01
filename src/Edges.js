@@ -9,77 +9,53 @@ function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max))
 }
 
-const toto = (function () {
-  const bbox = new THREE.Box3()
-  const bs = new THREE.Sphere()
-
-  return function (item, camera) {
-    const target = item.groupRef.current
-    target.updateWorldMatrix(true, true)
-    bbox.setFromObject(target)
-
-    // bbox.getCenter(center)
-    // console.log('center=', center)
-
-    bbox.getBoundingSphere(bs)
-
-    let projectedCenter = bs.center.project(camera)
-    // console.log('projectedCenter=', projectedCenter)
-
-    let x, y, z
-    x = clamp(projectedCenter.x, -1, 1)
-    y = clamp(projectedCenter.y, -1, 1)
-    z = clamp(projectedCenter.z, -1, 1)
-
-    item.pos.set(x, y, z)
-  }
-})()
-
-function Edges({ children }) {
-  const [items, setItems] = useState([])
-
+function EdgesItem({ children, renderPin }) {
   const { camera } = useThree()
+  const H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
+  const W = H * camera.aspect
 
-  useFrame(() => {
-    // console.log('toto')
-    for (const item of items) {
-      toto(item, camera)
-    }
-  })
-
-  const value = {
-    items,
-    setItems
-  }
-
-  return <EdgesContext.Provider value={value}>{children}</EdgesContext.Provider>
-}
-function useEdges() {
-  return useContext(EdgesContext)
-}
-export { useEdges }
-
-function EdgesItem({ children }) {
-  const { items, setItems } = useEdges()
+  let [mesh] = useState(new THREE.Mesh(new THREE.PlaneGeometry((2 / 100) * W, (2 / 100) * W), new THREE.MeshBasicMaterial({ color: 'green' })))
 
   const groupRef = useRef(null)
-  const pinRef = useRef(null)
+  // const pinRef = useRef(null)
+
+  useFrame(
+    (function () {
+      const bbox = new THREE.Box3()
+      const bs = new THREE.Sphere()
+
+      return function () {
+        const target = groupRef.current
+        target.updateWorldMatrix(true, true)
+        bbox.setFromObject(target)
+
+        // bbox.getCenter(center)
+        // console.log('center=', center)
+
+        bbox.getBoundingSphere(bs)
+
+        let projectedCenter = bs.center.project(camera)
+        // console.log('projectedCenter=', projectedCenter)
+
+        let x, y, z
+        x = clamp(projectedCenter.x, -1, 1)
+        y = clamp(projectedCenter.y, -1, 1)
+        z = clamp(projectedCenter.z, -1, 1)
+
+        // mesh.position.set(x, y, z)
+        mesh.position.setX((x * W) / 2)
+        mesh.position.setY((y * W) / 2)
+      }
+    })()
+  )
 
   useLayoutEffect(() => {
-    const o = {
-      groupRef,
-      pos: new Vector3(),
-      pinRef
-    }
+    mesh.position.z = -camera.near
+    camera.add(mesh)
 
-    console.log('adding', o, items, performance.now)
-    setItems([...items, o])
-
-    // return () => remove(o)
+    return () => camera.remove(mesh)
   }, [])
 
   return <group ref={groupRef}>{children}</group>
 }
 export { EdgesItem }
-
-export default Edges

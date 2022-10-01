@@ -8,8 +8,6 @@ import App from './App'
 
 createRoot(document.getElementById('root')).render(
   <Canvas>
-    <Edges>
-      <App />
-    </Edges>
+    <App />
   </Canvas>
 )

@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
 import { Sky, Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import Text from './Text'
 import './styles.css'
 
-import { EdgesItem, useEdges } from './Edges'
+import { EdgesItem } from './Edges'
 
 function Jumbo() {
   const ref = useRef()
@@ -76,58 +76,13 @@ export default function App() {
   const [numbirds, setNumbirds] = useState(1)
   const cameraRef = useRef()
 
-  const { items } = useEdges()
-
-  useFrame(() => {
-    // console.log('items=', items)
-
-    const { current: camera } = cameraRef
-    // console.log('camera fov', camera.fov)
-    // console.log('camera near', camera.near)
-    // console.log('camera aspect', camera.aspect)
-    const H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
-    // console.log('H=', H)
-    const W = H * camera.aspect
-
-    items.forEach((item) => {
-      // console.log(item.pos.x)
-      item.pinRef.current.position.setX((item.pos.x * W) / 2)
-      item.pinRef.current.position.setY((item.pos.y * H) / 2)
-    })
-  })
-
   return (
     <group
       onClick={() => {
         console.log('click')
         setNumbirds(numbirds + 1)
       }}>
-      <PerspectiveCamera makeDefault ref={cameraRef} position={[0, 0, 50]}>
-        {items.map((item, i) => {
-          const { current: camera } = cameraRef
-          // console.log('camera fov', camera.fov)
-          // console.log('camera near', camera.near)
-          // console.log('camera aspect', camera.aspect)
-          const H = 2 * camera.near * Math.tan(((camera.fov / 2) * Math.PI) / 180)
-          // console.log('H=', H)
-          const W = H * camera.aspect
-
-          const w = (2 / 100) * W
-          const h = w
-
-          return (
-            <mesh ref={item.pinRef} key={i} position={[-W / 2, 0, 0]} position-z={-camera.near}>
-              {/* <circleGeometry args={[h, 32]} /> */}
-              <planeGeometry args={[w, h]} />
-              <meshBasicMaterial color={'green'} />
-            </mesh>
-          )
-        })}
-      </PerspectiveCamera>
-      <OrbitControls />
-
-      <ambientLight intensity={2} />
-      <pointLight position={[40, 40, 40]} />
+      <PerspectiveCamera makeDefault ref={cameraRef} position={[0, 0, 50]}></PerspectiveCamera>
 
       <Suspense fallback={null}>
         <Jumbo />
@@ -140,7 +95,12 @@ export default function App() {
 
         {/* <Sky /> */}
         {/* <Environment preset="city" /> */}
+
+        <OrbitControls />
       </Suspense>
+
+      <ambientLight intensity={2} />
+      <pointLight position={[40, 40, 40]} />
     </group>
   )
 }
