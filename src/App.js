@@ -1,12 +1,14 @@
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
-import { Sky, Environment, OrbitControls, PerspectiveCamera, OrthographicCamera } from '@react-three/drei'
+import { Sky, Environment, OrbitControls, PerspectiveCamera, OrthographicCamera, useHelper } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+
 import Text from './Text'
 import './styles.css'
 
-import { EdgesItem } from './Edges'
+import { EdgesItem, useEdgesItem } from './Edges'
+import { BoxHelper } from 'three'
 
 function Jumbo() {
   const ref = useRef()
@@ -22,18 +24,21 @@ function Jumbo() {
 
 // This component was auto-generated from GLTF by: https://github.com/react-spring/gltfjsx
 function Bird({ speed, factor, url, ...props }) {
+  const edgesItem = useEdgesItem()
   const { nodes, materials, animations } = useLoader(GLTFLoader, url)
   const group = useRef()
   const mesh = useRef()
   const [start] = useState(() => Math.random() * 5000)
   const [mixer] = useState(() => new THREE.AnimationMixer())
   useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [])
+  // useHelper(mesh, BoxHelper, 'red')
   useFrame((state, delta) => {
     mesh.current.position.y = Math.sin(start + state.clock.elapsedTime) * 5
     mesh.current.rotation.x = Math.PI / 2 + (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 10
     mesh.current.rotation.y = (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 2
     group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
     mixer.update(delta * speed)
+    edgesItem.update()
   })
   return (
     <group ref={group} dispose={null}>
@@ -73,12 +78,58 @@ function Birds() {
   return new Array(10).fill().map((_, i) => <RandBird key={i} />)
 }
 
+function Pin() {
+  const { values } = useEdgesItem()
+  const { vw, vh, x, y, theta, distance, offscreen } = values
+  console.log('Pin', vw, vh, x, y, theta, distance, offscreen)
+
+  const attributeRef = useRef()
+
+  const a = 2
+  const vertices = useMemo(() => new Float32Array([0, 0, 0, -a * vw, a * vw, 0, -a * vw, -a * vw, 0]), [vw, a])
+
+  useLayoutEffect(() => {
+    attributeRef.current.needsUpdate = true // update once vertices change (@see: https://codesandbox.io/s/dark-rain-xoxsck?file=/src/index.js)
+  }, [vertices])
+
+  const r = 5 * vw
+  const segments = 64
+
+  return (
+    <group
+      position-x={(x * 100 * vw) / 2}
+      position-y={(y * 100 * vh) / 2}
+      rotation-z={theta}
+      visible={offscreen}
+      // onPointerOver={({ object }) => object.scale.set(2, 2, 2)}
+      // onPointerOut={({ object }) => object.scale.set(1, 1, 1)}
+    >
+      <mesh>
+        <bufferGeometry>
+          <bufferAttribute ref={attributeRef} attach="attributes-position" array={vertices} count={vertices.length / 3} itemSize={3} />
+        </bufferGeometry>
+        <meshStandardMaterial color="hotpink" />
+      </mesh>
+      <group position-x={-(r + 1 * vw)}>
+        <mesh>
+          <circleGeometry args={[r, segments]} />
+          <meshBasicMaterial color={'black'} />
+        </mesh>
+        <mesh>
+          <circleGeometry args={[r * 0.95, segments]} />
+          <meshBasicMaterial color={'red'} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
 export default function App() {
   const [numbirds, setNumbirds] = useState(1)
   const [camNth, setCamNth] = useState(0)
 
-  const w = 2 / 100
-  const h = 2 / 100
+  const w = 2
+  const h = 2
 
   return (
     <group
@@ -96,26 +147,7 @@ export default function App() {
         <Jumbo />
         {/* <Birds /> */}
         {new Array(numbirds).fill().map((el, i) => (
-          <EdgesItem
-            key={i}
-            // camera={bool ? persRef.current : orthRef.current}
-            // render={({ W, H }) => {
-            //   // console.log('WH', W, H)
-            //   return (
-            //     <mesh onPointerOver={({ object }) => object.scale.set(2, 2, 2)} onPointerOut={({ object }) => object.scale.set(1, 1, 1)}>
-            //       <planeGeometry args={[w * W, h * W]} />
-            //       <meshBasicMaterial color={'green'} />
-            //     </mesh>
-            //   )
-            // }}
-            // insideAlso
-            // onFrame={({ x, y, pin, pinIn, W, H }) => {
-            //   // console.log((pos.x * 2) / 100)
-
-            //   pinIn.position.setX((-x * w * W) / 2)
-            //   pinIn.position.setY((-y * h * W) / 2)
-            // }}
-          >
+          <EdgesItem key={i} Pin={Pin}>
             <RandBird x={32.43157638924359} y={2.1634717810210837} z={4.896611046209522} bird="Stork" speed={5} factor={1.023085260486265} />
           </EdgesItem>
         ))}
