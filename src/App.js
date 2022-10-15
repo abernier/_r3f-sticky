@@ -9,6 +9,7 @@ import Text from './Text'
 import './styles.css'
 
 import Sticky, { useSticky } from './Sticky'
+import PinArrow from './Sticky/Sticky.pin.arrow'
 import PinCamera from './Sticky/Sticky.pin.camera'
 
 function Jumbo() {
@@ -80,11 +81,20 @@ function Birds() {
   return new Array(10).fill().map((_, i) => <RandBird key={i} />)
 }
 
+const Pins = {
+  camera: PinCamera,
+  arrow: PinArrow
+}
+
 export default function App() {
   const [numbirds, setNumbirds] = useState(1)
   const [camNth, setCamNth] = useState(0)
 
-  const { debug } = useControls({ debug: false })
+  const gui = useControls({
+    debug: false,
+    Pin: { options: Object.keys(Pins) }
+  })
+  console.log('gui', gui)
 
   return (
     <>
@@ -106,8 +116,8 @@ export default function App() {
           {new Array(numbirds).fill().map((el, i) => (
             <Sticky
               key={i}
-              debug={debug}
-              Pin={PinCamera}
+              debug={gui.debug}
+              Pin={Pins[gui.Pin]}
               //
             >
               <RandBird x={32.43157638924359} y={2.1634717810210837} z={4.896611046209522} bird="Stork" speed={5} factor={1.023085260486265} />
