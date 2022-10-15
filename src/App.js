@@ -114,7 +114,7 @@ export default function App() {
             </Sticky>
           ))}
 
-          {/* <Sky /> */}
+          <Sky />
           {/* <Environment preset="city" /> */}
 
           <OrbitControls />

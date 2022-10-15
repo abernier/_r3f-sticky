@@ -6,7 +6,7 @@ import PinArrow from './Sticky.pin.arrow'
 
 const { degToRad, radToDeg, clamp } = THREE.MathUtils
 
-const EdgesContext = createContext()
+const StickyContext = createContext()
 
 function Sticky({ children, Pin, debug }) {
   const [bbox] = useState(new THREE.Box3())
@@ -120,7 +120,7 @@ function Sticky({ children, Pin, debug }) {
   }
 
   return (
-    <EdgesContext.Provider value={value}>
+    <StickyContext.Provider value={value}>
       <group ref={containerRef}>
         {debug && (
           <boxHelper
@@ -153,7 +153,7 @@ function Sticky({ children, Pin, debug }) {
           </mesh>
         </group>
       )}
-    </EdgesContext.Provider>
+    </StickyContext.Provider>
   )
 }
 
@@ -162,6 +162,6 @@ Sticky.defaultProps = {
   debug: false
 }
 
-export const useSticky = () => useContext(EdgesContext)
+export const useSticky = () => useContext(StickyContext)
 
 export default Sticky
