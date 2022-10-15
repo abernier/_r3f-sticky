@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Vector3 } from 'three'
+import { useControls } from 'leva'
+import { useFBO } from '@react-three/drei'
 
 import { useSticky } from './Sticky'
 
@@ -9,6 +11,12 @@ function PinCamera() {
   const { values } = useSticky()
   const { vw, vh, x, y, theta, offscreen, bbox, bs, refs } = values
   // console.log('Pin', vw, vh, x, y, theta, distance, offscreen)
+
+  const gui = useControls('PinCamera', {
+    color: '#757d87',
+    size: 10,
+    offscreenOnly: false
+  })
 
   // Stem triangle shape
   const attributeRef = useRef()
@@ -20,11 +28,15 @@ function PinCamera() {
 
   const { gl, scene, camera, size, viewport } = useThree()
 
-  const [renderTarget] = useState(() => {
-    const width = 1440
-    const height = width / camera.aspect
-    const ret = new THREE.WebGLRenderTarget(width, height)
-    return ret
+  // const [renderTarget] = useState(() => {
+  //   const width = 1440
+  //   const height = width / camera.aspect
+  //   const ret = new THREE.WebGLRenderTarget(width, height)
+  //   return ret
+  // })
+  const renderTarget = useFBO({
+    multisample: true,
+    stencilBuffer: false
   })
 
   const cam2 = useMemo(() => camera.clone(), [camera])
@@ -33,10 +45,10 @@ function PinCamera() {
   const [v1] = useState(new Vector3())
   let [v1_proj] = useState(new Vector3())
 
-  const r = 10 * vw
+  const r = gui.size * vw
 
   useFrame(() => {
-    if (!offscreen) return // good optim
+    if (gui.offscreenOnly && !offscreen) return // good optim
 
     cam2.position.copy(camera.position)
     cam2.quaternion.copy(camera.quaternion)
@@ -102,14 +114,14 @@ function PinCamera() {
   })
 
   const segments = 64
-  const pinColor = 'red'
+  const pinColor = gui.color
   return (
     <group>
       <group
         position-x={(x * 100 * vw) / 2}
         position-y={(y * 100 * vh) / 2}
         rotation-z={theta}
-        visible={offscreen}
+        visible={gui.offscreenOnly ? offscreen : true}
         // onPointerOver={({ object }) => object.scale.set(2, 2, 2)}
         // onPointerOut={({ object }) => object.scale.set(1, 1, 1)}
       >
@@ -145,7 +157,7 @@ function PinCamera() {
             >
               {/* Render target circle */}
               <circleGeometry args={[r, segments]} />
-              <meshBasicMaterial map={renderTarget.texture} />
+              <meshBasicMaterial map={renderTarget.texture} toneMapped={false} />
             </mesh>
           </group>
         </group>

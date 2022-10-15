@@ -84,7 +84,7 @@ export default function App() {
   const [numbirds, setNumbirds] = useState(1)
   const [camNth, setCamNth] = useState(0)
 
-  const { myValue } = useControls({ myValue: 10 })
+  const { debug } = useControls({ debug: false })
 
   return (
     <>
@@ -93,7 +93,7 @@ export default function App() {
         onClick={() => {
           console.log('click')
           setNumbirds(numbirds + 1)
-          setCamNth(camNth + 1)
+          // setCamNth(camNth + 1)
         }}>
         <PerspectiveCamera makeDefault={camNth % 2 === 0} position={[0, 0, 50]} fov={50}></PerspectiveCamera>
         <PerspectiveCamera makeDefault={camNth % 2 === 1} position={[0, 0, 30]} fov={90}></PerspectiveCamera>
@@ -106,7 +106,7 @@ export default function App() {
           {new Array(numbirds).fill().map((el, i) => (
             <Sticky
               key={i}
-              debug={false}
+              debug={debug}
               Pin={PinCamera}
               //
             >
