@@ -103,7 +103,8 @@ export default function App() {
       step: 1,
       onChange: setNumbirds
     },
-    debug: false,
+    text: '#567238',
+    aabb: false,
     Pin: { options: Object.keys(Pins) }
   })
   // console.log('gui', gui)
@@ -114,22 +115,19 @@ export default function App() {
     //
     >
       <Stats />
-      <group
-        onClick={() => {
-          // setCamNth(camNth + 1)
-        }}>
+      <group>
         <PerspectiveCamera makeDefault={camNth % 2 === 0} position={[0, 0, 50]} fov={50}></PerspectiveCamera>
         <PerspectiveCamera makeDefault={camNth % 2 === 1} position={[0, 0, 30]} fov={90}></PerspectiveCamera>
         {/* <OrthographicCamera makeDefault={camNth % 3 === 2} near={0.00001}></OrthographicCamera> */}
         {/* <OrthographicCamera makeDefault zoom={5}></OrthographicCamera> */}
 
         <Suspense fallback={null}>
-          <Jumbo color="#586f3f" />
+          <Jumbo color={gui.text} />
           {/* <Birds /> */}
           {new Array(numbirds).fill().map((el, i) => (
             <Sticky
               key={i}
-              debug={gui.debug}
+              debug={gui.aabb}
               Pin={Pins[gui.Pin]}
               //
             >

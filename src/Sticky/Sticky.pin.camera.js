@@ -15,8 +15,15 @@ function PinCamera() {
   const gui = useControls('PinCamera', {
     color: '#757d87',
     size: 7,
+    border: 0.2,
     offscreenOnly: false,
-    crop: true
+    crop: true,
+    segments: {
+      value: 64,
+      min: 12,
+      max: 96,
+      step: 16
+    }
   })
 
   // Stem triangle shape
@@ -123,7 +130,7 @@ function PinCamera() {
     }
   })
 
-  const segments = 64
+  const segments = gui.segments
   const pinColor = gui.color
   return (
     <group>
@@ -155,12 +162,7 @@ function PinCamera() {
             <circleGeometry args={[r, segments]} />
             <meshBasicMaterial color={pinColor} />
           </mesh>
-          <group scale={0.95}>
-            <mesh>
-              {/* Inner circle */}
-              <circleGeometry args={[r, segments]} />
-              <meshBasicMaterial color="white" />
-            </mesh>
+          <group scale={1 - gui.border / gui.size}>
             <mesh
               rotation-z={-theta}
               //
