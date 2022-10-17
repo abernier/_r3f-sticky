@@ -14,8 +14,9 @@ function PinCamera() {
 
   const gui = useControls('PinCamera', {
     color: '#757d87',
-    size: 10,
-    offscreenOnly: false
+    size: 7,
+    offscreenOnly: false,
+    crop: true
   })
 
   // Stem triangle shape
@@ -28,18 +29,18 @@ function PinCamera() {
 
   const { gl, scene, camera, size, viewport } = useThree()
 
-  // const [renderTarget] = useState(() => {
-  //   const width = 1440
-  //   const height = width / camera.aspect
-  //   const ret = new THREE.WebGLRenderTarget(width, height)
-  //   return ret
-  // })
+  // WebGLRenderTarget
   const renderTarget = useFBO({
     multisample: true,
     stencilBuffer: false
   })
 
   const cam2 = useMemo(() => camera.clone(), [camera])
+  useLayoutEffect(() => {
+    // console.log('resize cam2')
+    cam2.aspect = size.width / size.height
+    cam2.updateProjectionMatrix()
+  }, [size, cam2])
 
   const [kube] = useState(new THREE.Object3D())
   const [v1] = useState(new Vector3())
@@ -59,16 +60,6 @@ function PinCamera() {
 
     const projectedCenter = bs.center.clone().project(cam2)
     // console.log('projectedCenter', projectedCenter)
-
-    // container.layers.set(1)
-    // console.log('container', container)
-    // container.traverse((o) => {
-    //   o.layers.set(1)
-    // })
-    // cam2.layers.disableAll()
-    // cam2.layers.disable(0)
-    // cam2.layers.enable(1)
-    // console.log('cam2', cam2.layers)
 
     //
     // gl.render cam2 (to renderTarget)
@@ -99,18 +90,37 @@ function PinCamera() {
     // Crop renderTarget texture
     //
     // @see: https://github.com/mrdoob/three.js/issues/1847#issuecomment-5471295
-    const tex = renderTarget.texture
-    // console.log('tex', tex)
-    const height = Math.min(h * renderTarget.height, renderTarget.height)
-    const width = height
-    const left = Math.min(Math.max((projectedCenter.x / 2 + 0.5) * renderTarget.width - width / 2, 0), renderTarget.width - width)
-    // console.log('left=', left)
-    const top = Math.min(Math.max((projectedCenter.y / 2 + 0.5) * renderTarget.height - height / 2, 0), renderTarget.height - height)
-    // console.log('top=', top)
-    tex.repeat.x = width / renderTarget.width
-    tex.repeat.y = height / renderTarget.height
-    tex.offset.x = (left / width) * tex.repeat.x
-    tex.offset.y = (top / height) * tex.repeat.y
+    //
+
+    if (gui.crop) {
+      let width
+      let height
+      let dim = renderTarget.width > renderTarget.height ? 'height' : 'width' // wide => limited by renderTarget.height / tall => limited by renderTarget.width
+
+      height = h * renderTarget[dim]
+      height = Math.min(height, renderTarget[dim])
+      width = height
+      const left = (projectedCenter.x / 2 + 0.5) * renderTarget.width - width / 2
+      // left = Math.max(left, 0)
+      // left = Math.min(left, renderTarget.width - width)
+      // console.log('left=', left)
+      const top = (projectedCenter.y / 2 + 0.5) * renderTarget.height - height / 2
+      // top = Math.max(top, 0)
+      // top = Math.min(top, renderTarget.height - height)
+      // console.log('top=', top)
+
+      const tex = renderTarget.texture
+      // console.log('tex', tex)
+      tex.repeat.x = width / renderTarget.width
+      tex.repeat.y = height / renderTarget.height
+      tex.offset.x = (left / width) * tex.repeat.x
+      tex.offset.y = (top / height) * tex.repeat.y
+    } else {
+      // default values
+      const tex = renderTarget.texture
+      tex.repeat.x = tex.repeat.y = 1
+      tex.offset.x = tex.offset.y = 0
+    }
   })
 
   const segments = 64

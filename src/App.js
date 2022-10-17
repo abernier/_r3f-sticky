@@ -3,7 +3,8 @@ import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame } from '@react-three/fiber'
 import { Sky, Environment, OrbitControls, PerspectiveCamera, OrthographicCamera, Stats } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { useControls } from 'leva'
+import { Leva, useControls } from 'leva'
+import Color from 'color'
 
 import Text from './Text'
 import './styles.css'
@@ -12,14 +13,21 @@ import Sticky, { useSticky } from './Sticky'
 import PinArrow from './Sticky/Sticky.pin.arrow'
 import PinCamera from './Sticky/Sticky.pin.camera'
 
-function Jumbo() {
+function Jumbo({ color }) {
   const ref = useRef()
   // useFrame(({ clock }) => (ref.current.rotation.x = ref.current.rotation.y = ref.current.rotation.z = Math.sin(clock.getElapsedTime()) * 0.3))
+
+  const base = Color(color)
+
+  const color1 = base.darken(0.3)
+  const color2 = base.darken(0.2)
+  const color3 = base.darken(0.1)
+
   return (
     <group ref={ref}>
-      <Text hAlign="right" position={[-12, 6.5, 0]} children="LOOK" frustumCulled={false} />
-      <Text hAlign="right" position={[-12, 0, 0]} children="THIS" frustumCulled={false} />
-      <Text hAlign="right" position={[-12, -6.5, 0]} children="BIRD" frustumCulled={false} />
+      <Text color={color1.toString()} hAlign="right" position={[-12, 6.5, 0]} children="LOOK" frustumCulled={false} />
+      <Text color={color2.toString()} hAlign="right" position={[-12, 0, 0]} children="THIS" frustumCulled={false} />
+      <Text color={color3.toString()} hAlign="right" position={[-12, -6.5, 0]} children="BIRD" frustumCulled={false} />
     </group>
   )
 }
@@ -70,9 +78,7 @@ function RandBird({ x, y, z, bird, speed, factor }) {
   speed ||= bird === 'Stork' ? 0.125 : bird === 'Flamingo' ? 0.25 : 2.5
   factor ||= bird === 'Stork' ? 0.5 + Math.random() : bird === 'Flamingo' ? 0.25 + Math.random() : 1 + Math.random() - 0.5
 
-  useEffect(() => {
-    console.log(x, y, z, bird, speed, factor)
-  }, [x, y, z, bird, speed, factor])
+  console.log(x, y, z, bird, speed, factor)
 
   return <Bird position={[x, y, z]} rotation={[0, x > 0 ? Math.PI : 0, 0]} speed={speed} factor={factor} url={`/${bird}.glb`} />
 }
@@ -91,18 +97,25 @@ export default function App() {
   const [camNth, setCamNth] = useState(0)
 
   const gui = useControls({
+    'num birds': {
+      value: numbirds,
+      min: 0,
+      step: 1,
+      onChange: setNumbirds
+    },
     debug: false,
     Pin: { options: Object.keys(Pins) }
   })
-  console.log('gui', gui)
+  // console.log('gui', gui)
 
   return (
-    <>
+    <Canvas
+    // linear={false}
+    //
+    >
       <Stats />
       <group
         onClick={() => {
-          console.log('click')
-          setNumbirds(numbirds + 1)
           // setCamNth(camNth + 1)
         }}>
         <PerspectiveCamera makeDefault={camNth % 2 === 0} position={[0, 0, 50]} fov={50}></PerspectiveCamera>
@@ -111,7 +124,7 @@ export default function App() {
         {/* <OrthographicCamera makeDefault zoom={5}></OrthographicCamera> */}
 
         <Suspense fallback={null}>
-          <Jumbo />
+          <Jumbo color="#586f3f" />
           {/* <Birds /> */}
           {new Array(numbirds).fill().map((el, i) => (
             <Sticky
@@ -120,7 +133,15 @@ export default function App() {
               Pin={Pins[gui.Pin]}
               //
             >
-              <RandBird x={32.43157638924359} y={2.1634717810210837} z={4.896611046209522} bird="Stork" speed={5} factor={1.023085260486265} />
+              <RandBird
+                x={32.43157638924359}
+                y={2.1634717810210837}
+                z={4.896611046209522}
+                bird="Stork"
+                speed={2}
+                factor={1.023085260486265}
+                //
+              />
             </Sticky>
           ))}
 
@@ -133,6 +154,6 @@ export default function App() {
         <ambientLight intensity={2} />
         <pointLight position={[40, 40, 40]} />
       </group>
-    </>
+    </Canvas>
   )
 }

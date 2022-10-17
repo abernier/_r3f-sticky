@@ -20,7 +20,8 @@ export default function Text({ children, vAlign = 'center', hAlign = 'center', s
     <group {...props} scale={[0.1 * size, 0.1 * size, 0.1]}>
       <Text3D ref={mesh} font={boldUrl} {...config}>
         {children}
-        <meshNormalMaterial />
+        {/* <meshNormalMaterial /> */}
+        <meshStandardMaterial color={color} />
       </Text3D>
     </group>
   )

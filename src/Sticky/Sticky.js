@@ -21,7 +21,6 @@ function Sticky({ children, Pin, debug }) {
   const pinRef = useRef(null)
   const debugRef = useRef(null)
   const sphereRef = useRef(null)
-  const cubeRef = useRef(null)
   const boxHelperRef = useRef(null)
 
   function update() {
@@ -102,7 +101,6 @@ function Sticky({ children, Pin, debug }) {
   }
 
   useLayoutEffect(() => {
-    console.log('useLayoutEffect')
     // console.log('camera changed', camera.position.z)
 
     const { current: pin } = pinRef
@@ -125,7 +123,7 @@ function Sticky({ children, Pin, debug }) {
         {debug && (
           <boxHelper
             ref={boxHelperRef}
-            color={0xffff00}
+            // color={0xffff00}
             attach={(parent, self) => {
               // console.log('attach', parent, self)
               self.setFromObject(parent)
@@ -143,13 +141,9 @@ function Sticky({ children, Pin, debug }) {
       </group>
       {debug && (
         <group ref={debugRef} name="Sticky__debug">
-          {/* <mesh ref={cubeRef} position={[0, 0, 0]}>
-            <boxGeometry args={[2 * bs.radius, 2 * bs.radius, 2 * bs.radius]} />
-            <meshBasicMaterial color="#000" wireframe />
-          </mesh> */}
           <mesh ref={sphereRef} position={[0, 0, 0]}>
             <sphereGeometry args={[1]} />
-            <meshBasicMaterial color="#ddd" transparent opacity={0.5} />
+            <meshBasicMaterial color="#00ff00" transparent opacity={0.125} />
           </mesh>
         </group>
       )}
