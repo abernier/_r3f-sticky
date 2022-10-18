@@ -3,7 +3,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame } from '@react-three/fiber'
 import { Sky, Environment, OrbitControls, PerspectiveCamera, OrthographicCamera, Stats } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Leva, useControls } from 'leva'
+import { useControls, folder } from 'leva'
 import Color from 'color'
 
 import Text from './Text'
@@ -12,6 +12,10 @@ import './styles.css'
 import Sticky, { useSticky } from './Sticky'
 import PinArrow from './Sticky/Sticky.pin.arrow'
 import PinCamera from './Sticky/Sticky.pin.camera'
+
+function rand(min = 0, max = 1) {
+  return min + Math.random() * (max - min)
+}
 
 function Jumbo({ color }) {
   const ref = useRef()
@@ -33,7 +37,7 @@ function Jumbo({ color }) {
 }
 
 // This component was auto-generated from GLTF by: https://github.com/react-spring/gltfjsx
-function Bird({ speed, factor, url, ...props }) {
+function Bird({ speed, factor, url, rotY, ...props }) {
   const Sticky = useSticky()
   const { nodes, materials, animations } = useLoader(GLTFLoader, url)
   const group = useRef()
@@ -45,10 +49,16 @@ function Bird({ speed, factor, url, ...props }) {
   const sceneRef = useRef()
 
   useFrame((state, delta) => {
-    mesh.current.position.y = Math.sin(start + state.clock.elapsedTime) * 5
-    mesh.current.rotation.x = Math.PI / 2 + (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 10
-    mesh.current.rotation.y = (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 2
-    group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
+    // mesh.current.position.y = Math.sin(start + state.clock.elapsedTime) * 5
+    // mesh.current.rotation.x = Math.PI / 2 + (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 10
+    // mesh.current.rotation.y = (Math.sin(start + state.clock.elapsedTime) * Math.PI) / 2
+    // group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
+    // group.current.rotation.y += delta * factor
+    if (factor !== 0) {
+      group.current.rotation.y += delta * factor
+    } else {
+      group.current.rotation.y = rotY
+    }
     mixer.update(delta * speed)
     Sticky.update() // ME
   })
@@ -70,17 +80,17 @@ function Bird({ speed, factor, url, ...props }) {
   )
 }
 
-function RandBird({ x, y, z, bird, speed, factor }) {
-  x ||= (20 + Math.random() * 80) * (Math.round(Math.random()) ? -1 : 1)
-  y ||= -10 + Math.random() * 20
-  z ||= -5 + Math.random() * 10
-  bird ||= ['Stork', 'Parrot', 'Flamingo'][Math.round(Math.random() * 2)]
-  speed ||= bird === 'Stork' ? 0.125 : bird === 'Flamingo' ? 0.25 : 2.5
-  factor ||= bird === 'Stork' ? 0.5 + Math.random() : bird === 'Flamingo' ? 0.25 + Math.random() : 1 + Math.random() - 0.5
+function RandBird({ x, y, z, bird, speed, factor, rotY }) {
+  x ??= rand(20, 100) * (Math.round(Math.random()) ? -1 : 1)
+  y ??= rand(-10, 10)
+  z ??= rand(-5, 5)
+  bird ??= ['Stork', 'Parrot', 'Flamingo'][Math.round(Math.random() * 2)]
+  speed ??= bird === 'Stork' ? 0.125 : bird === 'Flamingo' ? 0.25 : 2.5
+  factor ??= bird === 'Stork' ? 0.5 + Math.random() : bird === 'Flamingo' ? 0.25 + Math.random() : 1 + Math.random() - 0.5
 
   console.log(x, y, z, bird, speed, factor)
 
-  return <Bird position={[x, y, z]} rotation={[0, x > 0 ? Math.PI : 0, 0]} speed={speed} factor={factor} url={`/${bird}.glb`} />
+  return <Bird position={[x, y, z]} rotation={[0, x > 0 ? Math.PI : 0, 0]} speed={speed} factor={factor} rotY={rotY} url={`/${bird}.glb`} />
 }
 
 function Birds() {
@@ -94,18 +104,50 @@ const Pins = {
 
 export default function App() {
   const [numbirds, setNumbirds] = useState(1)
-  const [camNth, setCamNth] = useState(0)
+  const [speed, setSpeed] = useState(0)
+  const [factor, setFactor] = useState(0)
+  const [rotY, setRotY] = useState(0)
 
   const gui = useControls({
-    'num birds': {
+    birds: {
       value: numbirds,
       min: 0,
       step: 1,
-      onChange: setNumbirds
+      onChange: setNumbirds,
+      hint: 'Number of birds to display'
     },
+    speed: {
+      value: speed,
+      min: 0,
+      max: 4,
+      onChange: setSpeed,
+      hint: 'Flapping wings animation speed'
+    },
+    factor: {
+      value: factor,
+      min: 0,
+      max: 3,
+      onChange: setFactor,
+      hint: 'Rotating animation speed'
+    },
+    rotY: {
+      value: rotY,
+      min: 0,
+      max: 2 * Math.PI,
+      onChange: setRotY,
+      hint: 'Initial rotY angle'
+    },
+    fov: {
+      value: 50,
+      min: 0,
+      max: 300
+    },
+
+    aabb: true,
+    Pin: { options: Object.keys(Pins) },
     text: '#567238',
-    aabb: false,
-    Pin: { options: Object.keys(Pins) }
+    //
+    options: folder({}, { collapsed: true })
   })
   // console.log('gui', gui)
 
@@ -116,32 +158,33 @@ export default function App() {
     >
       <Stats />
       <group>
-        <PerspectiveCamera makeDefault={camNth % 2 === 0} position={[0, 0, 50]} fov={50}></PerspectiveCamera>
-        <PerspectiveCamera makeDefault={camNth % 2 === 1} position={[0, 0, 30]} fov={90}></PerspectiveCamera>
-        {/* <OrthographicCamera makeDefault={camNth % 3 === 2} near={0.00001}></OrthographicCamera> */}
-        {/* <OrthographicCamera makeDefault zoom={5}></OrthographicCamera> */}
+        <PerspectiveCamera makeDefault position-z={50} fov={gui.fov} />
 
         <Suspense fallback={null}>
           <Jumbo color={gui.text} />
           {/* <Birds /> */}
-          {new Array(numbirds).fill().map((el, i) => (
-            <Sticky
-              key={i}
-              debug={gui.aabb}
-              Pin={Pins[gui.Pin]}
-              //
-            >
-              <RandBird
-                x={32.43157638924359}
-                y={2.1634717810210837}
-                z={4.896611046209522}
-                bird="Stork"
-                speed={2}
-                factor={1.023085260486265}
+          {new Array(numbirds).fill().map((el, i) => {
+            // special initial position for the first bird (others are random)
+            const pos = i === 0 ? { x: 35, y: 0, z: 0 } : {}
+
+            return (
+              <Sticky
+                key={i}
+                debug={gui.aabb}
+                Pin={Pins[gui.Pin]}
                 //
-              />
-            </Sticky>
-          ))}
+              >
+                <RandBird
+                  {...pos}
+                  bird="Stork"
+                  speed={speed}
+                  factor={factor}
+                  rotY={rotY}
+                  //
+                />
+              </Sticky>
+            )
+          })}
 
           <Sky />
           {/* <Environment preset="city" /> */}
