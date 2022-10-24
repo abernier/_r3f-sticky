@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/r3f-sticky/static/css/main.8e750ea8.css",
-    "main.js": "/r3f-sticky/static/js/main.81410f4a.js",
+    "main.js": "/r3f-sticky/static/js/main.e1f3987d.js",
     "static/media/bold.blob": "/r3f-sticky/static/media/bold.65e5a908f07c29fdb373.blob",
     "index.html": "/r3f-sticky/index.html",
     "main.8e750ea8.css.map": "/r3f-sticky/static/css/main.8e750ea8.css.map",
-    "main.81410f4a.js.map": "/r3f-sticky/static/js/main.81410f4a.js.map"
+    "main.e1f3987d.js.map": "/r3f-sticky/static/js/main.e1f3987d.js.map"
   },
   "entrypoints": [
     "static/css/main.8e750ea8.css",
-    "static/js/main.81410f4a.js"
+    "static/js/main.e1f3987d.js"
   ]
 }
