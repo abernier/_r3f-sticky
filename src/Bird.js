@@ -136,7 +136,7 @@ function RandBird(props) {
   const b = bird === undefined ? props.states?.bird : bird
   // console.log('b=', b)
 
-  return <Bird position={position} rotation={rotation} speed={s} factor={f} rotY={r} url={`/${b}.glb`} />
+  return <Bird position={position} rotation={rotation} speed={s} factor={f} rotY={r} url={`${process.env.PUBLIC_URL}/${b}.glb`} />
 }
 RandBird.defaultProps = {
   collapsed: true

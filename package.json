@@ -2,6 +2,7 @@
   "name": "circling-birds",
   "version": "1.0.0",
   "description": "Animating a bunch of GLTFs and text-geometry.",
+  "homepage": "https://abernier.github.io/r3f-sticky",
   "keywords": [
     "gltf",
     "text-geometry",
@@ -22,6 +23,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
@@ -30,5 +32,8 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "devDependencies": {
+    "gh-pages": "^4.0.0"
+  }
 }
