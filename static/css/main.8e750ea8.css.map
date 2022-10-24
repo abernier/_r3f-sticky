@@ -1,0 +1,1 @@
+{"version":3,"file":"static/css/main.8e750ea8.css","mappings":"AAAA,iBAGE,qBACF,CAEA,KACE,QAEF,CAEA,MAEE,OAAQ,CADR,cAEF","sources":["styles.css"],"sourcesContent":["*,\n::before,\n::after {\n  box-sizing: border-box;\n}\n\nbody {\n  margin: 0;\n  /* background-color: #d8f2ff; */\n}\n\n#root {\n  position: fixed;\n  inset: 0;\n}\n"],"names":[],"sourceRoot":""}
