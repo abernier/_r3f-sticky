@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Vector3 } from 'three'
-import { useControls } from 'leva'
+import { useControls, folder } from 'leva'
 import { useFBO } from '@react-three/drei'
 
 import { useSticky } from './Sticky'
@@ -14,23 +14,37 @@ function PinCamera() {
 
   const gui = useControls('PinCamera', {
     color: '#757d87',
-    size: 7,
-    border: 0.2,
+    maxsize: { value: 7, optional: true, disabled: false },
+    border: 0.05,
     offscreenOnly: false,
     crop: true,
-    segments: {
-      value: 64,
-      min: 12,
-      max: 96,
-      step: 16
-    }
+    stem: false,
+    opacity: {
+      value: 0.5,
+      min: 0,
+      max: 1
+    },
+    options: folder(
+      {
+        segments: {
+          value: 64,
+          min: 12,
+          max: 96,
+          step: 16
+        },
+        follow: true,
+        angularDiameter: false
+      },
+      { collapsed: true }
+    )
   })
 
   // Stem triangle shape
-  const attributeRef = useRef()
+  const attributeRef = useRef(null)
   const a = 2
   const vertices = useMemo(() => new Float32Array([0, 0, 0, -a * vw, a * vw, 0, -a * vw, -a * vw, 0]), [vw, a])
   useLayoutEffect(() => {
+    if (!attributeRef.current) return
     attributeRef.current.needsUpdate = true // update once vertices change (@see: https://codesandbox.io/s/dark-rain-xoxsck?file=/src/index.js)
   }, [vertices])
 
@@ -51,16 +65,20 @@ function PinCamera() {
 
   const [kube] = useState(new THREE.Object3D())
   const [v1] = useState(new Vector3())
-  let [v1_proj] = useState(new Vector3())
-
-  const r = gui.size * vw
+  const [v1_proj] = useState(new Vector3())
+  const [h_proj] = useState({ val: 0 })
 
   useFrame(() => {
     if (gui.offscreenOnly && !offscreen) return // good optim
 
+    // cam2.copy(camera)
     cam2.position.copy(camera.position)
     cam2.quaternion.copy(camera.quaternion)
-    cam2.lookAt(bs.center)
+    cam2.projectionMatrix.copy(camera.projectionMatrix)
+
+    if (gui.follow) {
+      cam2.lookAt(bs.center) // constantly lookAt the subject
+    }
     // cam2.updateMatrix()
     cam2.updateMatrixWorld()
     // cam2.updateProjectionMatrix() // needed?
@@ -86,12 +104,24 @@ function PinCamera() {
     // Compute bounding sphere height (from cam2)
     //
     // @see: https://discourse.threejs.org/t/bounding-sphere-projected-height-on-screen/43225
+
     kube.position.copy(bs.center)
     kube.lookAt(cam2.position)
-    v1.set(0, bs.radius, 0)
+
+    if (gui.angularDiameter) {
+      const D = bs.center.clone().sub(cam2.position).length()
+      const delta = 2 * Math.asin(r / D)
+      let gamma = Math.PI - delta / 2
+      v1.set(0, bs.radius * Math.cos(gamma), bs.radius * Math.sin(gamma))
+    } else {
+      v1.set(0, bs.radius, 0)
+    }
+
     v1.applyMatrix4(kube.matrixWorld)
     v1_proj.copy(v1).project(cam2)
     const h = v1_proj.sub(projectedCenter).divideScalar(2).length() * 2
+    h_proj.val = h
+    // console.log('h=', h)
 
     //
     // Crop renderTarget texture
@@ -130,8 +160,16 @@ function PinCamera() {
     }
   })
 
+  // const r = gui.maxsize * vw
+  // console.log('h_proj', h_proj.val * window.innerHeight)
+  let r = (h_proj.val / 2) * 100 * vh
+  if (gui.maxsize) {
+    r = Math.min(r, gui.maxsize * vw)
+  }
+
   const segments = gui.segments
   const pinColor = gui.color
+  const opacity = { transparent: gui.opacity < 1, opacity: gui.opacity }
   return (
     <group>
       <group
@@ -146,30 +184,29 @@ function PinCamera() {
         <boxGeometry args={[0.5 * vh, 0.5 * vh, 0]} />
         <meshBasicMaterial color={'green'} />
       </mesh> */}
-        <mesh>
-          {/* Stem */}
+        <mesh visible={gui.stem}>
           <bufferGeometry>
             <bufferAttribute ref={attributeRef} attach="attributes-position" array={vertices} count={vertices.length / 3} itemSize={3} />
           </bufferGeometry>
           <meshBasicMaterial color={pinColor} />
         </mesh>
         <group
-          position-x={-(r + 1 * vw)}
+          position-x={gui.stem ? -(r + 1 * vw) : 0}
           //
         >
-          <mesh>
+          <mesh scale={1 + gui.border / gui.maxsize}>
             {/* Outer circle */}
             <circleGeometry args={[r, segments]} />
-            <meshBasicMaterial color={pinColor} />
+            <meshBasicMaterial color={pinColor} {...opacity} />
           </mesh>
-          <group scale={1 - gui.border / gui.size}>
+          <group>
             <mesh
               rotation-z={-theta}
               //
             >
               {/* Render target circle */}
               <circleGeometry args={[r, segments]} />
-              <meshBasicMaterial map={renderTarget.texture} toneMapped={false} />
+              <meshBasicMaterial map={renderTarget.texture} toneMapped={false} {...opacity} />
             </mesh>
           </group>
         </group>
